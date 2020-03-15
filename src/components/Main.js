@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import Playlist from 'react-mp3-player';
 import CircleType from 'circletype';
 import { getNasaInfo } from '../api.js';
 import Explanation from './Explanation.js';
@@ -26,6 +25,32 @@ const Container = styled.div`
   align-items: center;
 `;
 
+const Video = styled.iframe`
+  cursor: pointer;
+  position: absolute;
+  box-shadow: 0 0 5px 3px #333333;
+  border-radius: 60% 60% 60% 60%;
+  width: 500px;
+  height: 500px;
+  backface-visibility: hidden;
+  z-index: 2;
+  animation: fadein 4s;
+
+  @keyframes fadein {
+    from { width: 0; height: 0; }
+    to   { width: 500px; height: 500px; }
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 const Main = () => {
   const [flip, setFlip] = useState(false);
   const [data, setData] = useState({
@@ -37,19 +62,27 @@ const Main = () => {
     date: '',
   });
 
-  useEffect(async () => {
-    const result = await getNasaInfo();
-    setData(result.data);
-    new CircleType(document.getElementById('title')).radius(330);
+  useEffect(() => {
+    const f = async () => {
+      const result = await getNasaInfo();
+      setData(result.data);
+      new CircleType(document.getElementById('title')).radius(330);
+    };
+    f();
   }, []);
-  const tracks = [{ name:'', desc: 'Description 1', src:''}]
+
   return <>
     <h2 id="title">
       {(data.title || 'NASA').toUpperCase()}
     </h2>
-    {data.media_type === 'image' && 
+    {data.media_type === 'image' ? 
       <Container onClick={() => setFlip(!flip)} flip={flip ? 1 : 0}>
         <Image url={data.url} />
+        <Explanation textExplanation={data.explanation} />
+      </Container>
+    :
+      <Container onClick={() => setFlip(!flip)} flip={flip ? 1 : 0}>
+        <Video src={`${data.url}&controls=0&loop=1&playlist=${data.url.substring(data.url.lastIndexOf('embed/')+6, data.url.lastIndexOf('?'))}`} />
         <Explanation textExplanation={data.explanation} />
       </Container>
     }
